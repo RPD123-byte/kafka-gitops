@@ -1,0 +1,43 @@
+settings:
+  topics:
+    defaults:
+      replication: 1  # Single replica for staging
+
+topics:
+  user-events-staging:
+    partitions: 3
+    configs:
+      cleanup.policy: delete
+      retention.ms: 86400000  # 1 day retention for staging
+
+  user-profiles-staging:
+    partitions: 1
+    configs:
+      cleanup.policy: compact
+
+  test-topic:
+    partitions: 1
+    configs:
+      cleanup.policy: delete
+      retention.ms: 3600000  # 1 hour
+
+services:
+  user-service-staging:
+    type: application
+    produces:
+      - user-events-staging
+      - user-profiles-staging
+    consumes:
+      - user-events-staging
+
+  test-consumer:
+    type: application
+    consumes:
+      - test-topic
+
+users:
+  dev-team:
+    roles:
+      - reader
+      - writer
+      - operator

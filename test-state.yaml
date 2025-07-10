@@ -1,0 +1,15 @@
+topics:
+  test-topic:
+    partitions: 3
+    replication: 1
+    configs:
+      cleanup.policy: delete
+      retention.ms: 604800000
+
+services:
+  test-service:
+    type: application
+    produces:
+      - test-topic
+    consumes:
+      - test-topic

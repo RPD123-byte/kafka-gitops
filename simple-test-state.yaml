@@ -1,0 +1,11 @@
+settings:
+  topics:
+    defaults:
+      replication: 1  # Single replica for simple test
+
+topics:
+  test-topic:
+    partitions: 1
+    configs:
+      cleanup.policy: delete
+      retention.ms: 3600000  # 1 hour

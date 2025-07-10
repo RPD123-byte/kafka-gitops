@@ -1,0 +1,34 @@
+FROM openjdk:8-jre-alpine
+
+# Install required packages
+RUN apk add --no-cache bash curl
+
+# Create app directory
+WORKDIR /app
+
+# Copy the built JAR file
+COPY build/libs/kafka-gitops-all.jar /app/kafka-gitops.jar
+
+# Copy the executable script
+COPY build/output/kafka-gitops /app/kafka-gitops
+
+# Make the script executable
+RUN chmod +x /app/kafka-gitops
+
+# Create a simple health check endpoint
+COPY docker/health-check.sh /app/health-check.sh
+RUN chmod +x /app/health-check.sh
+
+# Expose port for health checks
+EXPOSE 8080
+
+# Create a simple HTTP server for health checks
+RUN echo '#!/bin/bash\n\
+echo "HTTP/1.1 200 OK\n\
+Content-Type: text/plain\n\
+\n\
+kafka-gitops is running" | nc -l -p 8080 -q 1' > /app/health-server.sh && chmod +x /app/health-server.sh
+
+# Set the entrypoint
+ENTRYPOINT ["/app/kafka-gitops"]
+CMD ["--help"]

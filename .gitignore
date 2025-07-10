@@ -13,3 +13,11 @@ state.yaml
 plan.json
 test.py
 /generated/
+terraform/.terraform
+terraform/.terraform/providers
+terraform/.terraform/providers/registry.terraform.io
+terraform/.terraform/providers/registry.terraform.io/hashicorp
+terraform/.terraform.lock.hcl
+terraform/kafka-gitops-key
+terraform/kafka-gitops-key.pub
+terraform/terraform.tfstate

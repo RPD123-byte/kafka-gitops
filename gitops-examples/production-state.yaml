@@ -1,0 +1,102 @@
+settings:
+  topics:
+    defaults:
+      replication: 3
+    blacklist:
+      prefixed:
+        - _confluent
+        - __consumer_offsets
+        - __transaction_state
+
+topics:
+  user-events:
+    partitions: 12
+    replication: 3
+    configs:
+      cleanup.policy: delete
+      retention.ms: 604800000  # 7 days
+      segment.ms: 86400000     # 1 day
+
+  user-profiles:
+    partitions: 6
+    replication: 3
+    configs:
+      cleanup.policy: compact
+      segment.ms: 86400000
+
+  payment-transactions:
+    partitions: 18
+    replication: 3
+    configs:
+      cleanup.policy: delete
+      retention.ms: 2592000000  # 30 days
+      min.insync.replicas: 2
+
+  audit-logs:
+    partitions: 3
+    replication: 3
+    configs:
+      cleanup.policy: delete
+      retention.ms: 7776000000  # 90 days
+
+services:
+  user-service:
+    type: application
+    produces:
+      - user-events
+      - user-profiles
+    consumes:
+      - user-events
+
+  payment-service:
+    type: application
+    produces:
+      - payment-transactions
+      - audit-logs
+    consumes:
+      - user-profiles
+
+  analytics-streams:
+    type: kafka-streams
+    application-id: analytics-processor
+    consumes:
+      - user-events
+      - payment-transactions
+    produces:
+      - user-events  # enriched events
+
+  data-pipeline:
+    type: kafka-connect
+    group-id: data-sync-cluster
+    storage-topics:
+      config: connect-configs-data
+      offset: connect-offsets-data
+      status: connect-status-data
+    connectors:
+      s3-sink:
+        consumes:
+          - audit-logs
+          - payment-transactions
+      database-source:
+        produces:
+          - user-profiles
+
+users:
+  analytics-team:
+    roles:
+      - reader
+  
+  data-engineering:
+    roles:
+      - reader
+      - operator
+
+customUserAcls:
+  analytics-team:
+    read-analytics-topics:
+      name: analytics-
+      type: TOPIC
+      pattern: PREFIXED
+      host: "*"
+      operation: READ
+      permission: ALLOW

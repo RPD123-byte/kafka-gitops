@@ -1,0 +1,44 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: openjdk8
+    commands:
+      - echo Installing kafka-gitops...
+      - wget https://github.com/devshawn/kafka-gitops/releases/latest/download/kafka-gitops.zip
+      - unzip kafka-gitops.zip
+      - chmod +x kafka-gitops
+      - mv kafka-gitops /usr/local/bin/
+
+  pre_build:
+    commands:
+      - echo Pre-build phase started on `date`
+      - echo KAFKA_BOOTSTRAP_SERVERS=$KAFKA_BOOTSTRAP_SERVERS
+
+  build:
+    commands:
+      - echo Build phase started on `date`
+      
+      # Validate the state file
+      - echo "Validating state file..."
+      - kafka-gitops -f production-state.yaml validate
+      
+      # Generate execution plan
+      - echo "Generating execution plan..."
+      - kafka-gitops -f production-state.yaml plan -o plan.json
+      
+      # Apply changes (in production, you might want manual approval here)
+      - echo "Applying changes to Kafka cluster..."
+      - kafka-gitops -f production-state.yaml apply -p plan.json
+
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo "Kafka GitOps deployment completed successfully!"
+
+artifacts:
+  files:
+    - plan.json
+    - production-state.yaml
+  name: kafka-gitops-artifacts
